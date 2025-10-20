@@ -1,24 +1,42 @@
 import os
 from datetime import datetime
 
-cart = []  # Use lower case for variable names
+# Global variables
+cart = []
 bill_number = 1
+customer_name = ""
 
+# Ensure bills directory exists
 if not os.path.exists("bills"):
-    os.makedirs("bills")  # Lowercase for os functions
+    os.makedirs("bills")
 
+# Function to set customer name
+def set_customer_name():
+    global customer_name
+    customer_name = input("Enter customer's name: ").strip()
+    if not customer_name:
+        print("Name cannot be blank. Please try again.")
+        set_customer_name()
+
+# Function to add a product to the cart
 def add_product():
-    name = input("Customer ka naam daalo: ") if not cart else cart
-    product = input("Saman ka naam daalo: ")
-    price = float(input("Ek piece ki keemat (₹): "))
-    qty = int(input("Quantity kitni: "))
-    cart.append((product, price, qty, name))
-    print(f"{qty} x {product} bill me jod diya ")
+    if not customer_name:
+        set_customer_name()
+    product = input("Enter product name: ").strip()
+    try:
+        price = float(input("Price per unit (₹): "))
+        qty = int(input("Quantity: "))
+    except ValueError:
+        print("Invalid input. Price and quantity must be numbers.")
+        return
+    cart.append((product, price, qty))
+    print(f"{qty} x {product} added to the bill.")
 
+# Function to save the bill to a file
 def save_bill():
-    global bill_number  # Use lowercase and 'global' for variable scope
+    global bill_number, cart
     if not cart:
-        print("Bill khali hai, pehle saman add karo!")
+        print("The bill is empty. Please add products first.")
         return
 
     filename = f"bill_{bill_number}.txt"
@@ -26,64 +44,71 @@ def save_bill():
 
     with open(path, "w", encoding="utf-8") as f:
         f.write("===== SHOP BILL =====\n")
-        f.write(f"Date: {datetime.now()}\n")
+        f.write(f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
         f.write(f"Bill No: {bill_number}\n")
-        f.write(f"Customer: {cart}\n\n")
+        f.write(f"Customer: {customer_name}\n\n")
 
         total = 0
-        for item in cart:
-            product, price, qty, customer = item
+        for product, price, qty in cart:
             cost = price * qty
-            f.write(f"{product} – {qty} x {price} = {cost}\n")
+            f.write(f"{product} – {qty} x ₹{price:.2f} = ₹{cost:.2f}\n")
             total += cost
 
-        f.write(f"\nTotal = {total}\n")
-        f.write("=====================\n")
+        f.write(f"\nTotal = ₹{total:.2f}\n")
+        f.write("=====================")
 
-    print(f"\n Bill bana aur save bhi ho gaya \nFile: {path}")
+    print(f"\n✅ Bill created and saved: {path}")
     bill_number += 1
     cart.clear()
 
+# Function to view saved bills
 def view_bill():
     files = os.listdir("bills")
     if not files:
-        print(" Abhi tak koi bill save nahi hai.")
+        print("No bills have been saved yet.")
         return
 
     print("\nAvailable bills:")
     for i, file in enumerate(files, start=1):
         print(f"{i}. {file}")
 
-    choice = int(input("Kaunsa bill dekhna hai (number): "))
-    if 1 <= choice <= len(files):
-        path = os.path.join("bills", files[choice - 1])
-        with open(path, "r", encoding="utf-8") as f:
-            print("\n----- Saved Bill -----\n")
-            print(f.read())
-            print("----------------------\n")
-    else:
-        print(" Galat choice hai.")
+    try:
+        choice = int(input("Enter the number of the bill to view: "))
+        if 1 <= choice <= len(files):
+            path = os.path.join("bills", files[choice - 1])
+            with open(path, "r", encoding="utf-8") as f:
+                print("\n----- Saved Bill -----\n")
+                print(f.read())
+                print("----------------------\n")
+        else:
+            print("Invalid choice.")
+    except ValueError:
+        print("Please enter a valid number.")
 
+# Main menu loop
 def main():
     while True:
-        print("\n1. Saman Add karo")
-        print("2. Bill banao aur save karo")
-        print("3. Band karo")
-        print("4. Saved bill dekho")
-        choice = input("Kya karna hai? (1/2/3/4): ").strip()
+        print("\n1. Set customer name")
+        print("2. Add product")
+        print("3. Save bill")
+        print("4. View saved bills")
+        print("5. Exit")
+        choice = input("What would you like to do? (1/2/3/4/5): ").strip()
 
         if choice == "1":
-            add_product()
+            set_customer_name()
         elif choice == "2":
-            save_bill()
+            add_product()
         elif choice == "3":
-            print(" Billing System band ho gaya.")
-            break
+            save_bill()
         elif choice == "4":
             view_bill()
+        elif choice == "5":
+            print("🛑 Billing system exited.")
+            break
         else:
-            print("Galat option dala, dobara try karo.")
+            print("Invalid option. Please try again.")
 
+# Run the program
 if __name__ == "__main__":
     main()
-  
